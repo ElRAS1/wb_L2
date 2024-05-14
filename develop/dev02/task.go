@@ -1,5 +1,13 @@
 package main
 
+import (
+	"fmt"
+	"log"
+	"strconv"
+	"strings"
+	"unicode"
+)
+
 /*
 === Задача на распаковку ===
 
@@ -18,6 +26,29 @@ package main
 Функция должна проходить все тесты. Код должен проходить проверки go vet и golint.
 */
 
-func main() {
+func Unpacking(s string) (string, error) {
+	if _, err := strconv.Atoi(s); err == nil {
+		return "", fmt.Errorf("(некорректная строка)")
+	}
 
+	if s == "" {
+		return "", nil
+	}
+	var res strings.Builder
+	ch := ""
+	for _, i := range s {
+		if ok := unicode.IsDigit(i); ok {
+			r, err := strconv.Atoi(string(i))
+			if err != nil {
+				log.Fatalln(err)
+			}
+			for i := 0; i < r-1; i++ {
+				res.WriteString(ch)
+			}
+		} else {
+			res.WriteString(string(i))
+			ch = string(i)
+		}
+	}
+	return res.String(), nil
 }
