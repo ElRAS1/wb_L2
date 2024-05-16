@@ -9,9 +9,8 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	// "sort"
-	// "sort"
 	// "strings"
+	// "sort"
 )
 
 /*
@@ -44,50 +43,67 @@ func main() {
 }
 
 func MySort() {
-
 	k := flag.Int("k", 0, "enter column")
 	n := flag.Bool("n", false, "sort by num")
 	r := flag.Bool("r", false, "revers sort")
 	u := flag.Bool("u", false, "do not dublicate lines")
-
 	flag.Parse()
 
 	str := ReadFile("test.txt")
 	if *r {
-		ReversSort(*str)
+		res := ReversSort(*str)
+		PrintRes(res)
 	} else if *u {
-		Uniq(*str)
+		res := Uniq(*str)
+		PrintRes(res)
 	} else if *n {
-		Nsort(*str)
+		res := Nsort(*str)
+		PrintRes(res)
 	} else if *k != -1 {
-		SortByColumn(*str, *k)
+		res := SortByColumn(*str, *k)
+		PrintRes(res)
 	}
 
 }
 
-func ReversSort(str []string) {
-	for i := len(str) - 1; i >= 0; i-- {
-		fmt.Print(str[i])
+func ReversSort(str []string) []string {
+
+	res := make([]string, len(str))
+	for i, s := range str {
+		rs := []rune(s)
+		for j, k := 0, len(rs)-1; j < k; j, k = j+1, k-1 {
+			rs[j], rs[k] = rs[k], rs[j]
+		}
+		res[i] = string(rs)
 	}
+	return res
 }
 
-func Uniq(str []string) {
+func Uniq(str []string) []string {
 	mp := make(map[string]struct{})
-
-	for indx, _ := range str {
+	res := make([]string, 0, len(str))
+	for indx := range str {
 		_, ok := mp[str[indx]]
 		if !ok {
-			fmt.Print(str[indx])
+			res = append(res, str[indx])
+			mp[str[indx]] = struct{}{}
 		}
-		mp[str[indx]] = struct{}{}
 	}
+	return res
 }
 
-func Nsort(str []string) {
-	sort.Strings(str)
-	for _, i := range str {
-		fmt.Print(i)
-	}
+func Nsort(str []string) []string {
+	sort.Slice(str, func(i, j int) bool {
+		// Преобразование строк в числа для сортировки
+		iF, err1 := strconv.Atoi(str[i])
+		jF, err2 := strconv.Atoi(str[j])
+		if err1 != nil && err2 != nil {
+			log.Fatalln(err1)
+		}
+		return iF < jF
+	})
+
+	return str
 }
 
 func ReadFile(s string) *[]string {
@@ -97,32 +113,38 @@ func ReadFile(s string) *[]string {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	str := make([]string, fileStats.Size())
+	str := make([]string, 0, fileStats.Size())
 	buf := bufio.NewScanner(f)
 
 	for i := 0; buf.Scan(); i++ {
-		str = append(str, buf.Text()+"\n")
+		str = append(str, buf.Text())
 	}
+
+	sort.Strings(str)
 
 	return &str
 }
 
-func SortByColumn(data []string, colNum int) {
+func SortByColumn(data []string, colNum int) []string {
 	sort.Slice(data, func(i, j int) bool {
-		fields1 := strings.Fields(data[i])
-		fields2 := strings.Fields(data[j])
+		iFields := strings.Split(data[i], " ") // Разделение строки на части по пробелам
+		jFields := strings.Split(data[j], " ")
 
-		if len(fields1) > colNum && len(fields2) > colNum {
-			val1, err1 := strconv.Atoi(fields1[colNum])
-			val2, err2 := strconv.Atoi(fields2[colNum])
+		if len(iFields)-1 > colNum && len(jFields)-1 > colNum {
+			iF, err1 := strconv.Atoi(iFields[colNum])
+			jF, err2 := strconv.Atoi(jFields[colNum])
 
 			if err1 == nil && err2 == nil {
-				return val1 < val2
+				return iF < jF
 			}
 		}
-
-		return fields1[colNum] < fields2[colNum]
+		return iFields[colNum] < jFields[colNum]
 	})
+	return data
+}
 
-	fmt.Print(data)
+func PrintRes(str []string) {
+	for _, i := range str {
+		fmt.Println(i)
+	}
 }
