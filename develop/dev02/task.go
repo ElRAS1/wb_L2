@@ -37,17 +37,19 @@ func Unpacking(s string) (string, error) {
 	var res strings.Builder
 	ch := ""
 	for _, i := range s {
-		if ok := unicode.IsDigit(i); ok {
+
+		if ok := unicode.IsDigit(i); !ok {
+			res.WriteString(string(i))
+			ch = string(i)
+		} else {
 			r, err := strconv.Atoi(string(i))
 			if err != nil {
 				log.Fatalln(err)
 			}
+
 			for i := 0; i < r-1; i++ {
 				res.WriteString(ch)
 			}
-		} else {
-			res.WriteString(string(i))
-			ch = string(i)
 		}
 	}
 	return res.String(), nil
