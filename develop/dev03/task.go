@@ -4,6 +4,8 @@ import (
 	"bufio"
 	"flag"
 	"fmt"
+
+	// "fmt"
 	"log"
 	"os"
 	"sort"
@@ -52,15 +54,19 @@ func MySort() {
 	str := ReadFile("test.txt")
 	if *r {
 		res := ReversSort(*str)
+		CreateRes(res)
 		PrintRes(res)
 	} else if *u {
 		res := Uniq(*str)
+		CreateRes(res)
 		PrintRes(res)
 	} else if *n {
 		res := Nsort(*str)
+		CreateRes(res)
 		PrintRes(res)
 	} else if *k != -1 {
 		res := SortByColumn(*str, *k)
+		CreateRes(res)
 		PrintRes(res)
 	}
 
@@ -126,21 +132,34 @@ func ReadFile(s string) *[]string {
 }
 
 func SortByColumn(data []string, colNum int) []string {
+	colNum--
 	sort.Slice(data, func(i, j int) bool {
-		iFields := strings.Split(data[i], " ") // Разделение строки на части по пробелам
-		jFields := strings.Split(data[j], " ")
+		iFields := strings.Fields(data[i])
+		jFields := strings.Fields(data[j])
+		if len(iFields) > colNum && len(jFields) > colNum {
+			iF := iFields[colNum]
+			jF := jFields[colNum]
 
-		if len(iFields)-1 > colNum && len(jFields)-1 > colNum {
-			iF, err1 := strconv.Atoi(iFields[colNum])
-			jF, err2 := strconv.Atoi(jFields[colNum])
-
-			if err1 == nil && err2 == nil {
-				return iF < jF
-			}
+			return iF < jF
 		}
 		return iFields[colNum] < jFields[colNum]
 	})
 	return data
+}
+
+func CreateRes(data []string) {
+	file, err := os.Create("result.txt")
+	if err != nil {
+		panic("Cant create file")
+	}
+	defer file.Close()
+
+	for i := 0; i < len(data); i++ {
+		_, err := file.WriteString(data[i] + "\n")
+		if err != nil {
+			log.Fatalln(err)
+		}
+	}
 }
 
 func PrintRes(str []string) {
