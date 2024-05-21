@@ -12,17 +12,13 @@ import (
 
 /*
 === Утилита grep ===
-
 Реализовать утилиту фильтрации (man grep)
-
 Поддержать флаги:
-
+-A - "after" печатать +N строк после совпадения
 -B - "before" печатать +N строк до совпадения
 -C - "context" (A+B) печатать ±N строк вокруг совпадения
 -F - "fixed", точное совпадение со строкой, не паттерн
-
 -i - "ignore-case" (игнорировать регистр)
--A - "after" печатать +N строк после совпадения
 -n - "line num", печатать номер строки
 -c - "count" (количество строк) true
 -v - "invert" (вместо совпадения, исключать) true
@@ -30,17 +26,16 @@ import (
 */
 
 type flags struct {
-	A     bool
-	B     bool
-	C     bool
-	c     bool
-	i     bool
-	v     bool
-	F     bool
-	n     bool
-	flagA bool
-	an    int
-	bn    int
+	A  bool
+	B  bool
+	C  bool
+	c  bool
+	i  bool
+	v  bool
+	F  bool
+	n  bool
+	an int
+	bn int
 }
 
 func main() {
@@ -49,14 +44,9 @@ func main() {
 }
 
 func (f *flags) grep() {
-	fl := false
 	if len(os.Args) > 1 {
 		f.parsFlags(os.Args)
-	} else {
-		fl = true
-		_ = fl
 	}
-
 }
 
 func (f *flags) parsFlags(arg []string) {
@@ -91,67 +81,133 @@ func (f *flags) parsFlags(arg []string) {
 		pattern = arg[3]
 		file = arg[4]
 	}
-	f.myfind(pattern, file)
+
+	data := openfile(file)
+
+	f.myfind(pattern, data)
 }
 
-func (f *flags) myfind(patt string, fl string) {
-	file, err := os.Open(fl)
-
-	if err != nil {
-		log.Fatalln(err)
-	}
-	defer file.Close()
-
-	text := bufio.NewScanner(file)
-	rg, err := regexp.Compile(patt)
-
-	if err != nil {
-		log.Fatal(err)
-	}
-	count, linecount := 0, 1
-	for text.Scan() {
-		tmp := text.Text()
-		ok := rg.MatchString(tmp)
-		if f.i {
-			if strings.Contains(strings.ToLower(tmp), strings.ToLower(patt)) {
-				fmt.Println(tmp)
-			}
+func (f *flags) myfind(patt string, fl []string) {
+	var rg *regexp.Regexp
+	var err error
+	if f.F {
+		rg = func(s string) *regexp.Regexp {
+			return regexp.MustCompile("^" + s + "$")
+		}(patt)
+	} else {
+		rg, err = regexp.Compile(patt)
+		if err != nil {
+			log.Fatal(err)
 		}
-		if ok || f.flagA {
-			f.Ok(tmp, patt, &count, &linecount)
+	}
+	contextline := []int{}
+	count, linecount := 0, 1
+	for _, i := range fl {
+		ok := rg.MatchString(i)
+		if f.i {
+			if strings.Contains(strings.ToLower(i), strings.ToLower(patt)) {
+				fmt.Println(i)
+			}
+		} else if ok {
+			if f.c {
+				count++
+			}
+			if f.n {
+				fmt.Printf("%v:%v\n", linecount, i)
+			}
+			if f.F {
+				fmt.Println(i)
+			}
 		} else if !ok && f.v {
-			fmt.Println(tmp)
+			fmt.Println(i)
+		}
+		if ok && (f.C || f.B || f.A) {
+			contextline = append(contextline, linecount)
 		}
 		linecount++
 	}
 	if f.c {
 		fmt.Println(count)
 	}
+
+	if f.C || f.B || f.A {
+		f.contextABC(fl, contextline)
+	}
 }
 
-func (f *flags) Ok(tmp string, pat string, count *int, linecount *int) {
-	if f.c {
-		*count++
+func (f *flags) contextABC(fl []string, c []int) {
+	j, k := 0, 0
+	for indx, i := range c {
+		if f.A {
+			f.configA(&j, &k, &i, len(fl))
+		} else if f.B {
+			f.configB(&j, &k, &i)
+		} else if f.C {
+			f.configC(&j, &k, &i, len(fl))
+		}
+		for j < k {
+			fmt.Println(fl[j])
+			j++
+		}
+		if indx < len(c)-1 {
+			fmt.Println()
+		}
 	}
-	if f.n {
-		fmt.Printf("%v:%v\n", *linecount, tmp)
-	}
-	if f.A && f.an >= 0 {
-		f.flagA = true
-		fmt.Println(tmp)
-	}
-	f.an--
-	f.bn--
 }
-
-// func (f *flags) ContextandB() {
-
-// }
-
 func (f *flags) convert(s string) int {
 	n, err := strconv.Atoi(s)
 	if err != nil {
 		log.Fatalln(err)
 	}
 	return n
+}
+
+func (f *flags) configA(j *int, k *int, i *int, ln int) {
+	*j = *i - 1
+	if *i < 0 {
+		*i = 0
+	}
+	*k = *i + f.an
+	if *k > ln {
+		*k = ln
+	}
+}
+
+func (f *flags) configB(j *int, k *int, i *int) {
+	*j = *i - f.bn - 1
+	if *j < 0 {
+		*j = 0
+	}
+	*k = *i
+}
+
+func (f *flags) configC(j *int, k *int, i *int, ln int) {
+	*j = *i - f.bn - 1
+	if *j < 0 {
+		*j = 0
+	}
+
+	*k = *i + f.an
+	if *k > ln {
+		*k = ln
+	}
+}
+
+func openfile(fl string) []string {
+	file, err := os.Open(fl)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	defer file.Close()
+	sz, err := file.Stat()
+	if err != nil {
+		log.Fatalln(err)
+	}
+	data := make([]string, 0, sz.Size())
+	bf := bufio.NewScanner(file)
+	for bf.Scan() {
+		data = append(data, bf.Text())
+	}
+
+	return data
 }
