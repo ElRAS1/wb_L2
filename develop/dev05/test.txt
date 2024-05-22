@@ -10,6 +10,7 @@ asdw
 text my live
 
 cat
+gcats
 grep
 cut
 kill

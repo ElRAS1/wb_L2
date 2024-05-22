@@ -21,7 +21,7 @@ import (
 -i - "ignore-case" (игнорировать регистр)
 -n - "line num", печатать номер строки
 -c - "count" (количество строк) true
--v - "invert" (вместо совпадения, исключать) true
+-v - "invert" (вместо совпадения, исключать)
 Программа должна проходить все тесты. Код должен проходить проверки go vet и golint.
 */
 
@@ -45,11 +45,11 @@ func main() {
 
 func (f *flags) grep() {
 	if len(os.Args) > 1 {
-		f.parsFlags(os.Args)
+		f.ParsFlags(os.Args)
 	}
 }
 
-func (f *flags) parsFlags(arg []string) {
+func (f *flags) ParsFlags(arg []string) {
 	fl := arg[1]
 	switch fl {
 	case "A":
