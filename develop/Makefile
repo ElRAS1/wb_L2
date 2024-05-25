@@ -1,3 +1,5 @@
+all: lint format
+
 lint:
 	golangci-lint run
 
