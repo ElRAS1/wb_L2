@@ -1,5 +1,10 @@
 package main
 
+import (
+	"log/slog"
+	"os"
+)
+
 /*
 === HTTP server ===
 
@@ -22,6 +27,18 @@ package main
 	4. Код должен проходить проверки go vet и golint.
 */
 
-func main() {
+type Application struct {
+	logger *slog.Logger
+}
 
+func main() {
+	app := &Application{}
+	app.configLog()
+	app.logger.Info("app starting")
+	app.router()
+
+}
+
+func (app *Application) configLog() {
+	app.logger = slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
 }
