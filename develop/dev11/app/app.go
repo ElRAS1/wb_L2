@@ -2,7 +2,10 @@ package main
 
 import (
 	"log/slog"
+	"net/http"
 	"os"
+
+	"github.com/ElRAS1/wb_L2/develop/dev11/internal/server"
 )
 
 /*
@@ -28,17 +31,23 @@ import (
 */
 
 type Application struct {
-	logger *slog.Logger
+	Logger *slog.Logger
+	Srv    *http.Server
+}
+
+func NewApplication() *Application {
+	return &Application{
+		Logger: slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo})),
+		Srv:    server.NewServer(),
+	}
 }
 
 func main() {
-	app := &Application{}
-	app.configLog()
-	app.logger.Info("app starting")
-	app.router()
+	App := NewApplication()
 
-}
+	App.Logger.Info("app starting...")
 
-func (app *Application) configLog() {
-	app.logger = slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
+	err := App.Srv.ListenAndServe()
+
+	App.Logger.Error(err.Error())
 }
