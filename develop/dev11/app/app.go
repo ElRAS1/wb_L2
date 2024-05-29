@@ -2,7 +2,6 @@ package main
 
 import (
 	"log/slog"
-	"net/http"
 	"os"
 
 	"github.com/ElRAS1/wb_L2/develop/dev11/internal/server"
@@ -31,23 +30,26 @@ import (
 */
 
 type Application struct {
-	Logger *slog.Logger
-	Srv    *http.Server
+	logger *slog.Logger
 }
 
 func NewApplication() *Application {
 	return &Application{
-		Logger: slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo})),
-		Srv:    server.NewServer(),
+		logger: slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo})),
 	}
 }
 
 func main() {
-	App := NewApplication()
+	app := NewApplication()
+	srv, err := server.NewServer()
 
-	App.Logger.Info("app starting...")
+	if err != nil {
+		app.logger.Error(err.Error())
+		return
+	}
+	app.logger.Info("app starting...")
 
-	err := App.Srv.ListenAndServe()
+	err = srv.ListenAndServe()
 
-	App.Logger.Error(err.Error())
+	app.logger.Error(err.Error())
 }
