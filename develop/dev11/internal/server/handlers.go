@@ -1,15 +1,27 @@
 package server
 
 import (
-	// "fmt"
 	"net/http"
-	// "github.com/ElRAS1/wb_L2/develop/dev11/event"
+
+	"github.com/ElRAS1/wb_L2/develop/dev11/event"
 )
 
 func (s *Server) handleCreate(w http.ResponseWriter, r *http.Request) {
-	// evn := event.Event{}
-	// tmp := r.URL.Query()
-	w.Write([]byte("CreateHandle"))
+	evn := event.Event{}
+
+	if err := evn.Decode(*r); err != nil {
+		s.Logger.Error(err.Error())
+		http.Error(w, s.responseError(err), http.StatusBadRequest)
+		return
+	}
+
+	if err := evn.Validate(); err != nil {
+		s.Logger.Error(err.Error())
+		http.Error(w, s.responseError(err), http.StatusServiceUnavailable)
+		return
+	}
+
+	w.Write([]byte(evn.Event_name))
 }
 
 func (s *Server) handleUpdate(w http.ResponseWriter, r *http.Request) {

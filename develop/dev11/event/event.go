@@ -2,36 +2,53 @@ package event
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"time"
 )
 
 type Event struct {
-	user_id    uint8
-	event_name string
-	data       time.Time
+	User_id    uint8  `json:"user_id"`
+	Event_name string `json:"event_name"`
+	Time       string `json:"data"`
 }
 
 type Data struct {
-	data map[int]Event
+	Data map[uint8]Event
 }
 
 func NewData() *Data {
-	return &Data{data: make(map[int]Event)}
+	return &Data{Data: make(map[uint8]Event)}
 }
 
-func (d *Data) Decode(r *http.Request, evn *Event) error {
+func (ev *Event) Decode(r http.Request) error {
 	body, err := io.ReadAll(r.Body)
 
 	if err != nil {
 		return err
 	}
+	defer r.Body.Close()
 
-	err = json.Unmarshal(body, &evn)
+	err = json.Unmarshal(body, ev)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (ev *Event) Validate() error {
+
+	dateString := ev.Time
+	date, err := time.Parse(time.DateOnly, dateString)
 
 	if err != nil {
 		return err
 	}
+
+	if ok := date.After(time.Now()); !ok {
+		return fmt.Errorf("the entered date has already passed")
+	}
+
 	return nil
 }

@@ -7,7 +7,7 @@ import (
 
 func logMiddle(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		log.Println("Запрос:", r.URL.Path)
+		log.Println("Запрос:", r.URL)
 		next.ServeHTTP(w, r)
 	})
 }

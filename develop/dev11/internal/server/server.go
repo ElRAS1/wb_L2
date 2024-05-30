@@ -1,37 +1,42 @@
 package server
 
 import (
+	"log/slog"
 	"net/http"
+	"os"
 	"sync"
 
 	"github.com/ElRAS1/wb_L2/develop/dev11/event"
 	"github.com/ilyakaznacheev/cleanenv"
 )
 
-type Config struct {
+type config struct {
 	Port string `yaml:"Addr" env-default:"8080"`
 }
 
 type Server struct {
-	data   *event.Data
-	server *http.Server
 	mu     sync.Mutex
+	data   *event.Data
+	Server *http.Server
+	Logger *slog.Logger
 }
 
 func NewSrv() *Server {
 	return &Server{
 		data:   event.NewData(),
 		mu:     sync.Mutex{},
-		server: &http.Server{}}
+		Server: &http.Server{},
+		Logger: slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo})),
+	}
 }
 
-func NewServer() (*http.Server, error) {
-	cfg := Config{}
+func NewServer() (*Server, error) {
+	cfg := config{}
 	srv := NewSrv()
 	err := cleanenv.ReadConfig("config/config.yaml", &cfg)
 	if err != nil {
-		return srv.server, err
+		return srv, err
 	}
-	srv.server = &http.Server{Addr: cfg.Port, Handler: srv.Router()}
-	return srv.server, nil
+	srv.Server = &http.Server{Addr: cfg.Port, Handler: srv.Router()}
+	return srv, nil
 }
