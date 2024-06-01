@@ -28,8 +28,8 @@ import (
 */
 
 func main() {
+	server := server.Server{}
 	srv, err := server.NewServer()
-
 	if err != nil {
 		srv.Logger.Error(err.Error())
 		return

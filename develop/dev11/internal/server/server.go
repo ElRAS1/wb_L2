@@ -6,7 +6,7 @@ import (
 	"os"
 	"sync"
 
-	"github.com/ElRAS1/wb_L2/develop/dev11/event"
+	"github.com/ElRAS1/wb_L2/develop/dev11/internal/event"
 	"github.com/ilyakaznacheev/cleanenv"
 )
 
@@ -15,28 +15,29 @@ type config struct {
 }
 
 type Server struct {
-	mu     sync.Mutex
-	data   *event.Data
+	mu     sync.RWMutex
+	data   map[string]event.Event
 	Server *http.Server
 	Logger *slog.Logger
 }
 
 func NewSrv() *Server {
 	return &Server{
-		data:   event.NewData(),
-		mu:     sync.Mutex{},
+		data:   make(map[string]event.Event),
+		mu:     sync.RWMutex{},
 		Server: &http.Server{},
 		Logger: slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo})),
 	}
 }
 
-func NewServer() (*Server, error) {
+func (s *Server) NewServer() (*Server, error) {
 	cfg := config{}
-	srv := NewSrv()
+	s = NewSrv()
+	slog.SetDefault(s.Logger)
 	err := cleanenv.ReadConfig("config/config.yaml", &cfg)
 	if err != nil {
-		return srv, err
+		return s, err
 	}
-	srv.Server = &http.Server{Addr: cfg.Port, Handler: srv.Router()}
-	return srv, nil
+	s.Server = &http.Server{Addr: cfg.Port, Handler: s.Router()}
+	return s, nil
 }

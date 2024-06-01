@@ -11,15 +11,8 @@ import (
 type Event struct {
 	User_id    uint8  `json:"user_id"`
 	Event_name string `json:"event_name"`
+	Event      string `json:"event"`
 	Time       string `json:"data"`
-}
-
-type Data struct {
-	Data map[uint8]Event
-}
-
-func NewData() *Data {
-	return &Data{Data: make(map[uint8]Event)}
 }
 
 func (ev *Event) Decode(r http.Request) error {
