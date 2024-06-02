@@ -21,7 +21,7 @@ func (s *Server) handleEventsDay(w http.ResponseWriter, r *http.Request) {
 	tm, err := time.Parse(time.DateOnly, dt)
 	if err != nil {
 		s.Logger.Error(err.Error())
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		s.response(w, s.responseError(err.Error()), http.StatusBadRequest)
 		return
 	}
 	res := []event.Event{}
@@ -53,7 +53,7 @@ func (s *Server) handleEventsWeek(w http.ResponseWriter, r *http.Request) {
 	tm, err := time.Parse(time.DateOnly, dt)
 	if err != nil {
 		s.Logger.Error(err.Error())
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		s.response(w, s.responseError(err.Error()), http.StatusBadRequest)
 		return
 	}
 	res := []event.Event{}
@@ -86,7 +86,7 @@ func (s *Server) handleEventsMonth(w http.ResponseWriter, r *http.Request) {
 	tm, err := time.Parse(time.DateOnly, dt)
 	if err != nil {
 		s.Logger.Error(err.Error())
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		s.response(w, s.responseError(err.Error()), http.StatusBadRequest)
 		return
 	}
 	res := []event.Event{}
